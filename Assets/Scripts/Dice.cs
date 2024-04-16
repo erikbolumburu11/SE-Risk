@@ -27,7 +27,11 @@ public class Dice : MonoBehaviour
 
     void Update()
     {
-        Roll();
+        // when clicked on the dice, it will roll
+        if (Input.GetMouseButtonDown(0))
+        {
+            Roll();
+        }
     }
     short getDiceValue()
     {

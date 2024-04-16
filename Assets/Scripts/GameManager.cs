@@ -13,6 +13,12 @@ enum State
     PLAYER_WON
 }
 
+/**
+*
+*
+*
+*
+ */
 public class GameManager : MonoBehaviour
 {
     WorldMap map;
@@ -21,6 +27,7 @@ public class GameManager : MonoBehaviour
     public List<Player> players;
     public Player currentTurnsPlayer;
     int currentTurnsPlayerIndex;
+    int currentDiceValue;
 
     State state = State.INITIAL_UNIT_PLACEMENT;
 
@@ -28,14 +35,6 @@ public class GameManager : MonoBehaviour
     {
         map = GetComponent<WorldMap>();
         uiManager = GetComponent<UIManager>();
-
-        players = new List<Player>
-        {
-            new Player("Player 1", Color.red),
-            new Player("Player 2", Color.cyan),
-            new Player("Player 3", Color.green)
-        };
-
         ChangeState(state);
     }
 
@@ -65,13 +64,86 @@ public class GameManager : MonoBehaviour
                 break;
         }
     }
+    // set up dice object and roll
+    IEnumerator AttackDiceRoll()
+    {
+        Dice dice = FindObjectOfType<AttackDice>();
+        if (dice == null)
+        {
+            Debug.LogError("Dice object not found in the scene");
+            yield break;
+        }
+        currentDiceValue = -1;
+        while (currentDiceValue == -1)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+                if (hit.collider != null)
+                {
+                    currentDiceValue = dice.Roll();
 
+                }
+                
+            }
+            yield return null;
+        }
+    }
+    IEnumerator DefensekDiceRoll()
+    {
+        Dice dice = FindObjectOfType<DefenseDice>();
+        if (dice == null)
+        {
+            Debug.LogError("Dice object not found in the scene");
+            yield break;
+        }
+        currentDiceValue = -1;
+        while (currentDiceValue == -1)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+                if (hit.collider != null)
+                {
+                    currentDiceValue = dice.Roll();
+
+                }
+                
+            }
+            yield return null;
+        }
+    }
+    /**void GetPlayerOrder()
+    {
+        currentTurnsPlayerIndex = 0;
+        int[] diceValues = new int[players.Count];
+        foreach (Player player in players)
+        {
+            currentTurnsPlayer = player;
+            diceValues[currentTurnsPlayerIndex] = currentDiceValue;
+            currentTurnsPlayerIndex++;
+        }
+        // Sort players by dice value
+        for (int i = 0; i < players.Count; i++)
+        {
+            for (int j = i + 1; j < players.Count; j++)
+            {
+                if (diceValues[i] < diceValues[j])
+                {
+                    Player tempPlayer = players[i];
+                    players[i] = players[j];
+                    players[j] = tempPlayer;
+
+                    int tempDiceValue = diceValues[i];
+                    diceValues[i] = diceValues[j];
+                    diceValues[j] = tempDiceValue;
+                }
+            }
+        }
+    }*/
     IEnumerator InitialUnitPlacement()
     {
-        // Roll Dice To Pick Who Picks First
-        currentTurnsPlayerIndex = Random.Range(0, players.Count);
-        currentTurnsPlayer = players[currentTurnsPlayerIndex];
-
+        //GetPlayerOrder();
         int unitsPerPlayer = 35;
         switch (players.Count)
         {
@@ -95,10 +167,11 @@ public class GameManager : MonoBehaviour
 
         // Remove one unit to account for territory claiming
         unitsPerPlayer--;
-
         // Choose Territories
         // TODO: Change to iterate 42 times when map is expanded to full size
-        for (int i = 0; i < 3; i++)
+        var foundTerritories = FindObjectsOfType<Territory>();
+        int noOfTerritories = foundTerritories.Length;
+        for (int i = 0; i < noOfTerritories; i++)
         {
             Territory selectedTerritory = null;
             // Select Territory With Mouse

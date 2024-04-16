@@ -65,9 +65,9 @@ public class GameManager : MonoBehaviour
         }
     }
     // set up dice object and roll
-    IEnumerator DiceRoll()
+    IEnumerator AttackDiceRoll()
     {
-        Dice dice = FindObjectOfType<Dice>();
+        Dice dice = FindObjectOfType<AttackDice>();
         if (dice == null)
         {
             Debug.LogError("Dice object not found in the scene");
@@ -82,20 +82,44 @@ public class GameManager : MonoBehaviour
                 if (hit.collider != null)
                 {
                     currentDiceValue = dice.Roll();
+
                 }
                 
             }
             yield return null;
         }
     }
-    IEnumerator GetPlayerOrder()
+    IEnumerator DefensekDiceRoll()
+    {
+        Dice dice = FindObjectOfType<DefenseDice>();
+        if (dice == null)
+        {
+            Debug.LogError("Dice object not found in the scene");
+            yield break;
+        }
+        currentDiceValue = -1;
+        while (currentDiceValue == -1)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+                if (hit.collider != null)
+                {
+                    currentDiceValue = dice.Roll();
+
+                }
+                
+            }
+            yield return null;
+        }
+    }
+    /**void GetPlayerOrder()
     {
         currentTurnsPlayerIndex = 0;
         int[] diceValues = new int[players.Count];
         foreach (Player player in players)
         {
             currentTurnsPlayer = player;
-            yield return StartCoroutine(DiceRoll());
             diceValues[currentTurnsPlayerIndex] = currentDiceValue;
             currentTurnsPlayerIndex++;
         }
@@ -116,10 +140,10 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-    }
+    }*/
     IEnumerator InitialUnitPlacement()
     {
-        GetPlayerOrder();
+        //GetPlayerOrder();
         int unitsPerPlayer = 35;
         switch (players.Count)
         {

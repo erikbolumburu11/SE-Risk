@@ -9,32 +9,19 @@ using Random = UnityEngine.Random;
 
 public class Dice : MonoBehaviour
 {
-    Image image;
-    short shownValue;
-    [SerializeField] TMP_Text valueText;
-    // Start is called before the first frame update
+    protected Image image;
     void Start()
     {
         image = GetComponent<Image>();
     
     }
-    public int Roll()
-    {
-        shownValue = getDiceValue();
-        valueText.text = shownValue.ToString();
-        return shownValue;
-    }
 
-    void Update()
-    {
-        // when clicked on the dice, it will roll
-        if (Input.GetMouseButtonDown(0))
-        {
-            Roll();
-        }
-    }
-    short getDiceValue()
+    protected short getDiceValue()
     {
         return (short)Random.Range(1, 7);
+    }
+    public int Roll()
+    {
+        return 0;
     }
 }

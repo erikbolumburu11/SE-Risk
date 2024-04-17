@@ -6,6 +6,7 @@ using UnityEngine;
 public class UIManager : MonoBehaviour
 {
     [SerializeField] TMP_Text currentPlayerText;
+    public GameObject unitMovementUI;
     GameManager gameManager;
 
     void Start()

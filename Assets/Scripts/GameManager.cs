@@ -1,12 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 
 enum State
 {
-    INITIAL_UNIT_PLACEMENT,
+    PLAYER_INITIAL_UNIT_PLACEMENT,
     BEFORE_PLAYER_TURN,
     PLAYER_TURN,
     AFTER_PLAYER_TURN,
@@ -16,26 +14,31 @@ enum State
 public class GameManager : MonoBehaviour
 {
     WorldMap map;
+
     UIManager uiManager;
+    UnitMovementUI unitMovementUI;
+
+    [SerializeField] PlayerDataManager playerDataManager;
 
     public List<Player> players;
     public Player currentTurnsPlayer;
     int currentTurnsPlayerIndex;
 
-    State state = State.INITIAL_UNIT_PLACEMENT;
+    public Territory currentlyDefendingTerritory;
+    public Territory currentlyAttackingTerritory;
+
+    State state = State.PLAYER_INITIAL_UNIT_PLACEMENT;
+
+    public bool unitAmountToMoveConfirmed = false;
 
     void Start()
     {
         map = GetComponent<WorldMap>();
         uiManager = GetComponent<UIManager>();
+        unitMovementUI = uiManager.unitMovementUI.GetComponent<UnitMovementUI>();
+        playerDataManager = FindAnyObjectByType<PlayerDataManager>();
 
-        players = new List<Player>
-        {
-            new Player("Player 1", Color.red),
-            new Player("Player 2", Color.cyan),
-            new Player("Player 3", Color.green)
-        };
-
+        players = playerDataManager.players;
         ChangeState(state);
     }
 
@@ -43,7 +46,7 @@ public class GameManager : MonoBehaviour
     {
         switch (newState)
         {
-            case State.INITIAL_UNIT_PLACEMENT:
+            case State.PLAYER_INITIAL_UNIT_PLACEMENT:
                 StartCoroutine(InitialUnitPlacement());
                 break;
 
@@ -172,8 +175,6 @@ public class GameManager : MonoBehaviour
 
         if (!hasPossibleMove) ChangeState(State.AFTER_PLAYER_TURN);
 
-        Territory attackingTerritory;
-        Territory defendingTerritory;
         // Pick what territory to attack with
         {
             Territory selectedTerritory = null;
@@ -194,7 +195,7 @@ public class GameManager : MonoBehaviour
                 yield return null;
             }
 
-            attackingTerritory = selectedTerritory; 
+            currentlyAttackingTerritory = selectedTerritory; 
 
         }
         {
@@ -216,23 +217,36 @@ public class GameManager : MonoBehaviour
                 yield return null;
             }
 
-            defendingTerritory = selectedTerritory; 
+            currentlyDefendingTerritory = selectedTerritory; 
 
         }
 
         // Attack territory
-        defendingTerritory.unitCount--;
+        currentlyDefendingTerritory.unitCount--;
 
         // Claim territory 
-        if (defendingTerritory.unitCount <= 0)
+        if (currentlyDefendingTerritory.unitCount <= 0)
         {
-            defendingTerritory.owner.ownedTerritories.Remove(defendingTerritory);
-            attackingTerritory.owner.ownedTerritories.Add(defendingTerritory);
+            currentlyDefendingTerritory.owner.ownedTerritories.Remove(currentlyDefendingTerritory);
+            currentlyAttackingTerritory.owner.ownedTerritories.Add(currentlyDefendingTerritory);
 
-            defendingTerritory.owner = attackingTerritory.owner;
+            currentlyDefendingTerritory.owner = currentlyAttackingTerritory.owner;
 
-            defendingTerritory.unitCount = attackingTerritory.unitCount - 1;
-            attackingTerritory.unitCount = 1;
+            unitMovementUI.Show();
+
+            while(unitAmountToMoveConfirmed == false)
+            {
+                yield return null;
+            }
+
+            unitMovementUI.Hide();
+            unitAmountToMoveConfirmed = false;
+
+            currentlyDefendingTerritory.unitCount = unitMovementUI.unitsToMove;
+            currentlyAttackingTerritory.unitCount -= unitMovementUI.unitsToMove;
+
+            //currentlyDefendingTerritory.unitCount = currentlyAttackingTerritory.unitCount - 1;
+            //currentlyAttackingTerritory.unitCount = 1;
         }
 
         ChangeState(State.AFTER_PLAYER_TURN);

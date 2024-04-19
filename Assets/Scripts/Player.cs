@@ -1,7 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
+/*
+ * Stores data about each player.
+ * Handles player related state logic like their turn.
+ */
 public class Player
 {
     public List<Territory> ownedTerritories;
@@ -17,6 +22,10 @@ public class Player
         isAI = playerIsAI;
     }
 
+    /*
+     * Handles the logic for a player claiming territories and assigning units to
+     * claimed territories
+     */
     public IEnumerator InitialUnitPlacement(GameManager gm, int unitsPerPlayer)
     {
         // Roll Dice To Pick Who Picks First
@@ -27,13 +36,13 @@ public class Player
         {
             Territory selectedTerritory = null;
             // Select Territory With Mouse
-            while(selectedTerritory == null)
+            while (selectedTerritory == null)
             {
                 // If LMB pressed
                 if (Input.GetMouseButtonDown(0))
                 {
                     RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                    if(hit.collider != null)
+                    if (hit.collider != null)
                     {
                         Territory hitTerritory = hit.collider.GetComponent<Territory>();
                         if (hitTerritory.owner == null) selectedTerritory = hitTerritory;
@@ -41,7 +50,7 @@ public class Player
                 }
                 yield return null;
             }
-            
+
             // Claim Territory
             selectedTerritory.owner = gm.currentTurnsPlayer;
             selectedTerritory.unitCount = 1;
@@ -49,6 +58,7 @@ public class Player
 
             gm.NextPlayer();
 
+            yield return null;
         }
 
         // Distribute Army 
@@ -57,13 +67,13 @@ public class Player
             // Wait for input, if player clicks a territory it owns add 1 unit
             Territory selectedTerritory = null;
             // Select Territory With Mouse
-            while(selectedTerritory == null)
+            while (selectedTerritory == null)
             {
                 // If LMB pressed
                 if (Input.GetMouseButtonDown(0))
                 {
                     RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                    if(hit.collider != null)
+                    if (hit.collider != null)
                     {
                         Territory hitTerritory = hit.collider.GetComponent<Territory>();
                         if (hitTerritory.owner == gm.currentTurnsPlayer) selectedTerritory = hitTerritory;
@@ -80,11 +90,18 @@ public class Player
         gm.initialUnitPlacementComplete = true;
     }
 
+    /*
+     * Handles logic for things that happen before the players turn like
+     * trading in cards
+     */
     public void BeforePlayerTurn(GameManager gm)
     {
         gm.ChangeState(State.PLAYER_TURN);
     }
 
+    /*
+     * Handles the logic for the players turn
+     */
     public IEnumerator PlayerTurn(GameManager gm)
     {
         bool hasPossibleMove = true;
@@ -118,8 +135,7 @@ public class Player
                 yield return null;
             }
 
-            gm.currentlyAttackingTerritory = selectedTerritory; 
-
+            gm.currentlyAttackingTerritory = selectedTerritory;
         }
         {
             // Pick who to attack
@@ -140,12 +156,80 @@ public class Player
                 yield return null;
             }
 
-            gm.currentlyDefendingTerritory = selectedTerritory; 
+            gm.currentlyDefendingTerritory = selectedTerritory;
 
         }
 
         // Attack territory
-        gm.currentlyDefendingTerritory.unitCount--;
+        // DICE ROLL
+        gm.attackerDiceRoll = DiceRollChoiceState.UNDECIDED;
+        gm.defenderDiceRoll = DiceRollChoiceState.UNDECIDED;
+
+        gm.uiManager.diceRollUI.diceRollType = DiceRollType.ATTACK;
+        gm.uiManager.diceRollUI.Show();
+
+        while (gm.attackerDiceRoll == DiceRollChoiceState.UNDECIDED)
+        {
+            yield return null;
+        }
+        gm.uiManager.diceRollUI.Hide();
+
+        gm.uiManager.diceRollUI.diceRollType = DiceRollType.DEFENSE;
+        gm.uiManager.diceRollUI.Show();
+
+        while (gm.defenderDiceRoll == DiceRollChoiceState.UNDECIDED)
+        {
+            yield return null;
+        }
+
+        gm.uiManager.diceRollUI.Hide();
+
+        // RESULTS
+        List<int> attackerRoll = new List<int>();
+        for (int i = 0; i < (int)gm.attackerDiceRoll; i++)
+        {
+            attackerRoll.Add(Random.Range(1, 7));
+        }
+
+        List<int> defenderRoll = new List<int>();
+        for (int i = 0; i < (int)gm.defenderDiceRoll; i++)
+        {
+            defenderRoll.Add(Random.Range(1, 7));
+        }
+
+        gm.uiManager.diceRollResultsUI.Show(attackerRoll, defenderRoll);
+
+        while(gm.diceResultsShown == false)
+        {
+            yield return null;
+        }
+
+        gm.diceResultsShown = false;
+
+        gm.uiManager.diceRollResultsUI.Hide();
+
+        for (int i = 0; i < (int)gm.defenderDiceRoll; i++)
+        {
+            if (attackerRoll.Count == 0 || defenderRoll.Count == 0) break;
+            int attackerMax = attackerRoll.Max();
+            int defenderMax = defenderRoll.Max();
+
+            if (attackerMax > defenderMax)
+            {
+                gm.currentlyDefendingTerritory.unitCount--;
+
+                attackerRoll = Utils.RemoveANumberFromList(attackerRoll, attackerMax);
+                defenderRoll = Utils.RemoveANumberFromList(defenderRoll, defenderMax);
+            }
+            else
+            {
+                gm.currentlyAttackingTerritory.unitCount--;
+
+                attackerRoll = Utils.RemoveANumberFromList(attackerRoll, attackerMax);
+                defenderRoll = Utils.RemoveANumberFromList(defenderRoll, defenderMax);
+            }
+        }
+
 
         // Claim territory 
         if (gm.currentlyDefendingTerritory.unitCount <= 0)
@@ -157,7 +241,7 @@ public class Player
 
             gm.unitMovementUI.Show();
 
-            while(gm.unitAmountToMoveConfirmed == false)
+            while (gm.unitAmountToMoveConfirmed == false)
             {
                 yield return null;
             }
@@ -167,14 +251,19 @@ public class Player
 
             gm.currentlyDefendingTerritory.unitCount = gm.unitMovementUI.unitsToMove;
             gm.currentlyAttackingTerritory.unitCount -= gm.unitMovementUI.unitsToMove;
-
-            //currentlyDefendingTerritory.unitCount = currentlyAttackingTerritory.unitCount - 1;
-            //currentlyAttackingTerritory.unitCount = 1;
         }
 
+        gm.attackerDiceRoll = DiceRollChoiceState.UNDECIDED;
+        gm.defenderDiceRoll = DiceRollChoiceState.UNDECIDED;
+
         gm.playerTurnComplete = true;
+
+        yield return null;
     }
 
+    /*
+     * Handles the logic for things that happen after the players turn
+     */
     public void AfterPlayerTurn(GameManager gm)
     {
         // Remove defeated players
@@ -187,7 +276,7 @@ public class Player
         }
 
         // Check win condition and change player
-        if(gm.players.Count == 1)
+        if (gm.players.Count == 1)
         {
             gm.ChangeState(State.PLAYER_WON);
         }
@@ -196,3 +285,4 @@ public class Player
         gm.ChangeState(State.BEFORE_PLAYER_TURN);
     }
 }
+

@@ -3,8 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/*
+ * Handles the logic and UI for the main menu UI
+ */
 public class MainMenuUI : MonoBehaviour
 {
+    /*
+     * Loads the player selection scene
+     */
     public void Start()
     {
         SceneManager.LoadScene("PlayerSelection");

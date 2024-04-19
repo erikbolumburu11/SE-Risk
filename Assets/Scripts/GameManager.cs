@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/*
+ * The current game state
+ */
 public enum State
 {
     INITIAL_UNIT_PLACEMENT,
@@ -14,6 +17,31 @@ public enum State
     PLAYER_WON
 }
 
+/*
+ * How many dice are rolled 
+ */
+public enum DiceRollChoiceState
+{
+    UNDECIDED = -1,
+    ONE = 1,
+    TWO = 2,
+    THREE = 3
+}
+
+/*
+ * Whether a dice roll is for the purpose of attacking or defending
+ */
+public enum DiceRollType
+{
+    ATTACK,
+    DEFENSE
+}
+
+/*
+ * Stores data about the current game state, handles moving between the
+ * different states, and stores flags that are used to communicate with other
+ * parts of the application.
+ */
 public class GameManager : MonoBehaviour
 {
     WorldMap map;
@@ -23,8 +51,10 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] PlayerDataManager playerDataManager;
 
+    // Event Flags
     public bool initialUnitPlacementComplete = false;
     public bool playerTurnComplete = false;
+    public bool diceResultsShown = false;
 
     public List<Player> players;
     public Player currentTurnsPlayer;
@@ -35,8 +65,15 @@ public class GameManager : MonoBehaviour
 
     State state = State.INITIAL_UNIT_PLACEMENT;
 
+    public DiceRollChoiceState attackerDiceRoll = DiceRollChoiceState.UNDECIDED;
+    public DiceRollChoiceState defenderDiceRoll = DiceRollChoiceState.UNDECIDED;
+
     public bool unitAmountToMoveConfirmed = false;
 
+    /*
+     * Initializes important variables
+     * Begins state machine
+     */
     void Start()
     {
         map = GetComponent<WorldMap>();
@@ -48,11 +85,17 @@ public class GameManager : MonoBehaviour
         ChangeState(state);
     }
 
+    /*
+     * Changes state to newState 
+     * Executes function pertaining to newState
+     */
     public void ChangeState(State newState)
     {
-        switch (newState)
+        state = newState;
+        switch (state)
         {
             case State.INITIAL_UNIT_PLACEMENT:
+                StopCoroutine(InitialUnitPlacement());
                 StartCoroutine(InitialUnitPlacement());
                 break;
 
@@ -61,6 +104,7 @@ public class GameManager : MonoBehaviour
                 break;
 
             case State.PLAYER_TURN:
+                StopCoroutine(PlayerTurn());
                 StartCoroutine(PlayerTurn());
                 break;
 
@@ -75,6 +119,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /*
+     * Handles the initial claiming of territories and placing of units for each player
+     */
     IEnumerator InitialUnitPlacement()
     {
         currentTurnsPlayerIndex = Random.Range(0, players.Count);
@@ -111,9 +158,11 @@ public class GameManager : MonoBehaviour
         ChangeState(State.BEFORE_PLAYER_TURN);
     }
 
+    /*
+     * Handles the player turn logic
+     */
     IEnumerator PlayerTurn()
     {
-
         StartCoroutine(currentTurnsPlayer.PlayerTurn(this));
 
         while (!playerTurnComplete) yield return null;
@@ -121,11 +170,17 @@ public class GameManager : MonoBehaviour
         ChangeState(State.AFTER_PLAYER_TURN);
     }
 
+    /*
+     * Handles the player won logic
+     */
     void PlayerWon()
     {
         Debug.Log("Player Won!");
     }
 
+    /*
+     * Change to next players turn
+     */
     public void NextPlayer()
     {
         currentTurnsPlayerIndex++;

@@ -1,63 +1,116 @@
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 
-enum State
+/*
+ * The current game state
+ */
+public enum State
 {
     INITIAL_UNIT_PLACEMENT,
+    BEFORE_AI_TURN,
+    AI_TURN,
+    AFTER_AI_TURN,
     BEFORE_PLAYER_TURN,
     PLAYER_TURN,
     AFTER_PLAYER_TURN,
     PLAYER_WON
 }
 
+/*
+ * How many dice are rolled 
+ */
+public enum DiceRollChoiceState
+{
+    UNDECIDED = -1,
+    ONE = 1,
+    TWO = 2,
+    THREE = 3
+}
+
+/*
+ * Whether a dice roll is for the purpose of attacking or defending
+ */
+public enum DiceRollType
+{
+    ATTACK,
+    DEFENSE
+}
+
+/*
+ * Stores data about the current game state, handles moving between the
+ * different states, and stores flags that are used to communicate with other
+ * parts of the application.
+ */
 public class GameManager : MonoBehaviour
 {
     WorldMap map;
-    UIManager uiManager;
+
+    public UIManager uiManager;
+    public UnitMovementUI unitMovementUI;
+
+    [SerializeField] PlayerDataManager playerDataManager;
+
+    // Event Flags
+    public bool initialUnitPlacementComplete = false;
+    public bool playerTurnComplete = false;
+    public bool diceResultsShown = false;
 
     public List<Player> players;
     public Player currentTurnsPlayer;
     int currentTurnsPlayerIndex;
 
+    public Territory currentlyDefendingTerritory;
+    public Territory currentlyAttackingTerritory;
+
     State state = State.INITIAL_UNIT_PLACEMENT;
 
+    public DiceRollChoiceState attackerDiceRoll = DiceRollChoiceState.UNDECIDED;
+    public DiceRollChoiceState defenderDiceRoll = DiceRollChoiceState.UNDECIDED;
+
+    public bool unitAmountToMoveConfirmed = false;
+
+    /*
+     * Initializes important variables
+     * Begins state machine
+     */
     void Start()
     {
         map = GetComponent<WorldMap>();
         uiManager = GetComponent<UIManager>();
+        unitMovementUI = uiManager.unitMovementUI.GetComponent<UnitMovementUI>();
+        playerDataManager = FindAnyObjectByType<PlayerDataManager>();
 
-        players = new List<Player>
-        {
-            new Player("Player 1", Color.red),
-            new Player("Player 2", Color.cyan),
-            new Player("Player 3", Color.green)
-        };
-
+        players = playerDataManager.players;
         ChangeState(state);
     }
 
-    void ChangeState(State newState)
+    /*
+     * Changes state to newState 
+     * Executes function pertaining to newState
+     */
+    public void ChangeState(State newState)
     {
-        switch (newState)
+        state = newState;
+        switch (state)
         {
             case State.INITIAL_UNIT_PLACEMENT:
+                StopCoroutine(InitialUnitPlacement());
                 StartCoroutine(InitialUnitPlacement());
                 break;
 
             case State.BEFORE_PLAYER_TURN:
-                BeforePlayerTurn();
+                currentTurnsPlayer.BeforePlayerTurn(this);
                 break;
 
             case State.PLAYER_TURN:
+                StopCoroutine(PlayerTurn());
                 StartCoroutine(PlayerTurn());
                 break;
 
             case State.AFTER_PLAYER_TURN:
-                StopCoroutine(PlayerTurn());
-                AfterPlayerTurn();
+                StopCoroutine(currentTurnsPlayer.PlayerTurn(this));
+                currentTurnsPlayer.AfterPlayerTurn(this);
                 break;
                 
             case State.PLAYER_WON:
@@ -66,9 +119,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /*
+     * Handles the initial claiming of territories and placing of units for each player
+     */
     IEnumerator InitialUnitPlacement()
     {
-        // Roll Dice To Pick Who Picks First
         currentTurnsPlayerIndex = Random.Range(0, players.Count);
         currentTurnsPlayer = players[currentTurnsPlayerIndex];
 
@@ -96,177 +151,37 @@ public class GameManager : MonoBehaviour
         // Remove one unit to account for territory claiming
         unitsPerPlayer--;
 
-        // Choose Territories
-        // TODO: Change to iterate 42 times when map is expanded to full size
-        for (int i = 0; i < 3; i++)
-        {
-            Territory selectedTerritory = null;
-            // Select Territory With Mouse
-            while(selectedTerritory == null)
-            {
-                // If LMB pressed
-                if (Input.GetMouseButtonDown(0))
-                {
-                    RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                    if(hit.collider != null)
-                    {
-                        Territory hitTerritory = hit.collider.GetComponent<Territory>();
-                        if (hitTerritory.owner == null) selectedTerritory = hitTerritory;
-                    }
-                }
-                yield return null;
-            }
-            
-            // Claim Territory
-            selectedTerritory.owner = currentTurnsPlayer;
-            selectedTerritory.unitCount = 1;
-            currentTurnsPlayer.ownedTerritories.Add(selectedTerritory);
+        StartCoroutine(currentTurnsPlayer.InitialUnitPlacement(this, unitsPerPlayer));
 
-            NextPlayer();
-        }
-
-        // Distribute Army 
-        for (int i = 0; i < unitsPerPlayer * players.Count; i++)
-        {
-            // Wait for input, if player clicks a territory it owns add 1 unit
-            Territory selectedTerritory = null;
-            // Select Territory With Mouse
-            while(selectedTerritory == null)
-            {
-                // If LMB pressed
-                if (Input.GetMouseButtonDown(0))
-                {
-                    RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                    if(hit.collider != null)
-                    {
-                        Territory hitTerritory = hit.collider.GetComponent<Territory>();
-                        if (hitTerritory.owner == currentTurnsPlayer) selectedTerritory = hitTerritory;
-                    }
-                }
-                yield return null;
-            }
-
-            selectedTerritory.unitCount++;
-
-            NextPlayer();
-        }
-
-        ChangeState(State.PLAYER_TURN);
-    }
-
-    void BeforePlayerTurn()
-    {
-        ChangeState(State.PLAYER_TURN);
-    }
-
-    IEnumerator PlayerTurn()
-    {
-        bool hasPossibleMove = true;
-
-        bool hasTerritoryToAttackWith = false;
-        foreach (Territory t in currentTurnsPlayer.ownedTerritories)
-        {
-            if (t.unitCount > 1) hasTerritoryToAttackWith = true;
-        }
-        if (!hasTerritoryToAttackWith) hasPossibleMove = false;
-
-        if (!hasPossibleMove) ChangeState(State.AFTER_PLAYER_TURN);
-
-        Territory attackingTerritory;
-        Territory defendingTerritory;
-        // Pick what territory to attack with
-        {
-            Territory selectedTerritory = null;
-            // Select Territory With Mouse
-            while (selectedTerritory == null)
-            {
-                // If LMB pressed
-                if (Input.GetMouseButtonDown(0))
-                {
-                    RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                    if (hit.collider != null)
-                    {
-                        Territory hitTerritory = hit.collider.GetComponent<Territory>();
-                        // Check if player has enough units to attack
-                        if (hitTerritory.owner == currentTurnsPlayer && hitTerritory.unitCount > 1) selectedTerritory = hitTerritory;
-                    }
-                }
-                yield return null;
-            }
-
-            attackingTerritory = selectedTerritory; 
-
-        }
-        {
-            // Pick who to attack
-            Territory selectedTerritory = null;
-            // Select Territory With Mouse
-            while (selectedTerritory == null)
-            {
-                // If LMB pressed
-                if (Input.GetMouseButtonDown(0))
-                {
-                    RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                    if (hit.collider != null)
-                    {
-                        Territory hitTerritory = hit.collider.GetComponent<Territory>();
-                        if (hitTerritory.owner != currentTurnsPlayer) selectedTerritory = hitTerritory;
-                    }
-                }
-                yield return null;
-            }
-
-            defendingTerritory = selectedTerritory; 
-
-        }
-
-        // Attack territory
-        defendingTerritory.unitCount--;
-
-        // Claim territory 
-        if (defendingTerritory.unitCount <= 0)
-        {
-            defendingTerritory.owner.ownedTerritories.Remove(defendingTerritory);
-            attackingTerritory.owner.ownedTerritories.Add(defendingTerritory);
-
-            defendingTerritory.owner = attackingTerritory.owner;
-
-            defendingTerritory.unitCount = attackingTerritory.unitCount - 1;
-            attackingTerritory.unitCount = 1;
-        }
-
-        ChangeState(State.AFTER_PLAYER_TURN);
-
-        yield return null;
-    }
-
-    void AfterPlayerTurn()
-    {
-        // Remove defeated players
-        for (int i = 0; i < players.Count; i++)
-        {
-            if (players[i].ownedTerritories.Count == 0)
-            {
-                players.RemoveAt(i);
-            }
-        }
-
-        // Check win condition and change player
-        if(players.Count == 1)
-        {
-            ChangeState(State.PLAYER_WON);
-        }
-
-        NextPlayer();
+        while (!initialUnitPlacementComplete) yield return null;
+        initialUnitPlacementComplete = false;
         ChangeState(State.BEFORE_PLAYER_TURN);
     }
 
+    /*
+     * Handles the player turn logic
+     */
+    IEnumerator PlayerTurn()
+    {
+        StartCoroutine(currentTurnsPlayer.PlayerTurn(this));
+
+        while (!playerTurnComplete) yield return null;
+        playerTurnComplete = false;
+        ChangeState(State.AFTER_PLAYER_TURN);
+    }
+
+    /*
+     * Handles the player won logic
+     */
     void PlayerWon()
     {
         Debug.Log("Player Won!");
     }
 
-    void NextPlayer()
+    /*
+     * Change to next players turn
+     */
+    public void NextPlayer()
     {
         currentTurnsPlayerIndex++;
         if(currentTurnsPlayerIndex >= players.Count)

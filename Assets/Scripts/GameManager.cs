@@ -161,7 +161,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator BeforePlayerTurn()
     {
-        StartCoroutine(currentTurnsPlayer.BeforePlayerTurn(this, 3));
+        StartCoroutine(currentTurnsPlayer.BeforePlayerTurn(this, CalculateTroopsToReceive()));
 
         while (!playerTurnComplete) yield return null;
         playerTurnComplete = false;
@@ -207,13 +207,60 @@ public class GameManager : MonoBehaviour
     {
         int troops = 0;
         troops += Mathf.Max(3, currentTurnsPlayer.ownedTerritories.Count / 3);
-        foreach (Continent continent in map.continents)
+        // setting up each continents object
+        Continent europe = new Continent
         {
-            if (continent.territories.TrueForAll(t => t.owner == currentTurnsPlayer))
+            bonusUnits = 5
+        };
+        Continent asia = new Continent
+        {
+            bonusUnits = 7
+        };
+        Continent africa = new Continent
+        {
+            bonusUnits = 3
+        };
+        Continent northAmerica = new Continent
+        {
+            bonusUnits = 5
+        };
+        Continent southAmerica = new Continent
+        {
+            bonusUnits = 2
+        };
+        Continent Oceania = new Continent
+        {
+            bonusUnits = 2
+        };
+        // setting the territories for each continent
+        europe.territoriesNames = new List<string> { "Iceland", "Scandinavia", "Great Britain", "Northern Europe", "Western Europe", "Southern Europe", "Ukraine" };
+        asia.territoriesNames = new List<string> { "Ural", "Siberia", "Yakutsk", "Kamchatka", "Irkutsk", "Mongolia", "Japan", "Afghanistan", "Middle East", "India", "China", "Siam" };
+        africa.territoriesNames = new List<string> { "North Africa", "Egypt", "East Africa", "Congo", "South Africa", "Madagascar" };
+        northAmerica.territoriesNames = new List<string> { "Alaska", "Northwest Territory", "Greenland", "Alberta", "Ontario", "Quebec", "Western United States", "Eastern United States", "Central America" };
+        southAmerica.territoriesNames = new List<string> { "Venezuela", "Peru", "Brazil", "Argentina" };
+        Oceania.territoriesNames = new List<string> { "Indonesia", "New Guinea", "Western Australia", "Eastern Australia" };
+        // adding all the continents to a list
+        List<Continent> continents = new List<Continent> { europe, asia, africa, northAmerica, southAmerica, Oceania };
+        // checking if the player owns the continent
+        foreach (Continent continent in continents)
+        {
+            bool ownsContinent = true;
+            foreach (string territoryName in continent.territoriesNames)
+            {
+                Territory territory = map.territories.Find(t => t.name == territoryName);
+                if (territory.owner != currentTurnsPlayer)
+                {
+                    ownsContinent = false;
+                    break;
+                }
+            }
+            if (ownsContinent)
             {
                 troops += continent.bonusUnits;
             }
         }
         return troops;
     }
+
+    
 }

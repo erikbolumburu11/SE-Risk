@@ -2,12 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Data", menuName = "Continent", order = 1)]
-
-public class Continent : ScriptableObject
+/*
+ * Stores data about each continent that appears on the map.
+*/
+public class Continent
 {
-    public string name;
-    public List<Territory> territories;
+    // The territories that make up this continent
+
+    public List<string> territoriesNames;
+    // The bonus units that the player receives for owning all territories in this continent
     public int bonusUnits;
 
 }

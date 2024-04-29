@@ -28,7 +28,7 @@ public class Player
 
         // Choose Territories
         // TODO: Change to iterate 42 times when map is expanded to full size
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 7; i++)
         {
             Territory selectedTerritory = null;
             // Select Territory With Mouse

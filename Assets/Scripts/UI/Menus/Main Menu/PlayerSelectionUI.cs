@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Random = UnityEngine.Random;
 
 /*
  * Handles the logic and UI for the player selection screen. This is where
@@ -12,6 +14,8 @@ public class PlayerSelectionUI : MonoBehaviour
 {
     [SerializeField] GameObject newPlayerPanelPrefab;
     [SerializeField] PlayerDataManager playerDataManager;
+
+    List<Color> playerColours = new List<Color> { Color.red, Color.blue, Color.green, Color.yellow, Color.magenta, Color.cyan };
 
     /*
      * Button logic to add a new player to the game
@@ -33,7 +37,10 @@ public class PlayerSelectionUI : MonoBehaviour
         foreach (PlayerPanel pp in playerPanels)
         {
             if (pp.name.Length == 0) return;
-            playerDataManager.players.Add(new Player(pp.name, Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f), pp.isAI));
+            int index = Random.Range(0, playerColours.Count);
+            Color colour = playerColours[index];
+            playerColours.RemoveAt(index);
+            playerDataManager.players.Add(new Player(pp.name, colour, pp.isAI));
         }
         SceneManager.LoadScene("Game");
     }

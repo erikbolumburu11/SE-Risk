@@ -173,7 +173,13 @@ public class Player
                     if (hit.collider != null)
                     {
                         Territory hitTerritory = hit.collider.GetComponent<Territory>();
-                        if (hitTerritory.owner != gm.currentTurnsPlayer) selectedTerritory = hitTerritory;
+                        if (hitTerritory.owner != gm.currentTurnsPlayer)
+                        {
+                            if (hitTerritory.adjacentTerritories.Contains(gm.currentlyAttackingTerritory))
+                            {
+                                selectedTerritory = hitTerritory;
+                            }
+                        }
                     }
                 }
                 yield return null;

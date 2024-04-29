@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
+using Unity.VisualScripting;
 using UnityEngine;
 
 /*
@@ -33,23 +33,41 @@ public class Player
 
         // Choose Territories
         // TODO: Change to iterate 42 times when map is expanded to full size
-        for (int i = 0; i < 7; i++)
+        int territoryCount = 7;
+        for (int i = 0; i < territoryCount; i++)
         {
             Territory selectedTerritory = null;
-            // Select Territory With Mouse
-            while (selectedTerritory == null)
+
+            // PLAYER OPTION
+            if (!gm.currentTurnsPlayer.isAI)
             {
-                // If LMB pressed
-                if (Input.GetMouseButtonDown(0))
+                // Select Territory With Mouse
+                while (selectedTerritory == null)
                 {
-                    RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                    if (hit.collider != null)
+                    // If LMB pressed
+                    if (Input.GetMouseButtonDown(0))
                     {
-                        Territory hitTerritory = hit.collider.GetComponent<Territory>();
-                        if (hitTerritory.owner == null) selectedTerritory = hitTerritory;
+                        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+                        if (hit.collider != null)
+                        {
+                            Territory hitTerritory = hit.collider.GetComponent<Territory>();
+                            if (hitTerritory.owner == null) selectedTerritory = hitTerritory;
+                        }
+                    }
+                    yield return null;
+                }
+            }
+            // AI LOGIC
+            else
+            {
+                while(selectedTerritory == null)
+                {
+                    Territory t = gm.map.territories[Random.Range(0, territoryCount)];
+                    if(t.owner == null)
+                    {
+                        selectedTerritory = t;
                     }
                 }
-                yield return null;
             }
 
             // Claim Territory
@@ -67,20 +85,29 @@ public class Player
         {
             // Wait for input, if player clicks a territory it owns add 1 unit
             Territory selectedTerritory = null;
-            // Select Territory With Mouse
-            while (selectedTerritory == null)
+            // PLAYER TURN
+            if (!gm.currentTurnsPlayer.isAI)
             {
-                // If LMB pressed
-                if (Input.GetMouseButtonDown(0))
+                // Select Territory With Mouse
+                while (selectedTerritory == null)
                 {
-                    RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                    if (hit.collider != null)
+                    // If LMB pressed
+                    if (Input.GetMouseButtonDown(0))
                     {
-                        Territory hitTerritory = hit.collider.GetComponent<Territory>();
-                        if (hitTerritory.owner == gm.currentTurnsPlayer) selectedTerritory = hitTerritory;
+                        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+                        if (hit.collider != null)
+                        {
+                            Territory hitTerritory = hit.collider.GetComponent<Territory>();
+                            if (hitTerritory.owner == gm.currentTurnsPlayer) selectedTerritory = hitTerritory;
+                        }
                     }
+                    yield return null;
                 }
-                yield return null;
+            }
+            // AI LOGIC
+            else
+            {
+                selectedTerritory = gm.currentTurnsPlayer.ownedTerritories[Random.Range(0, gm.currentTurnsPlayer.ownedTerritories.Count)];
             }
 
             selectedTerritory.unitCount++;
@@ -100,24 +127,32 @@ public class Player
         while(unitsToPlace > 0){
             // Wait for input, if player clicks a territory it owns add 1 unit
             Territory selectedTerritory = null;
-            // Select Territory With Mouse
-            while (selectedTerritory == null)
+            // PLAYER OPTION
+            if (!gm.currentTurnsPlayer.isAI)
             {
-                // If LMB pressed
-                if (Input.GetMouseButtonDown(0))
+                // Select Territory With Mouse
+                while (selectedTerritory == null)
                 {
-                    RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                    if (hit.collider != null)
+                    // If LMB pressed
+                    if (Input.GetMouseButtonDown(0))
                     {
-                        selectedTerritory = hit.collider.GetComponent<Territory>();
-                        if (selectedTerritory.owner == gm.currentTurnsPlayer){ 
-                            selectedTerritory.unitCount++;
-                            unitsToPlace--;
-                        };
+                        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+                        if (hit.collider != null)
+                        {
+                            if(hit.collider.GetComponent<Territory>().owner == gm.currentTurnsPlayer){
+                                selectedTerritory = hit.collider.GetComponent<Territory>();
+                            };
+                        }
                     }
+                    yield return null;
                 }
-                yield return null;
             }
+            else
+            {
+                selectedTerritory = gm.currentTurnsPlayer.ownedTerritories[Random.Range(0, gm.currentTurnsPlayer.ownedTerritories.Count)];
+            }
+            selectedTerritory.unitCount++;
+            unitsToPlace--;
         }
         gm.ChangeState(State.PLAYER_TURN);
     }
@@ -138,24 +173,52 @@ public class Player
 
         if (!hasPossibleMove) gm.ChangeState(State.AFTER_PLAYER_TURN);
 
+        // If AI Turn, stores which territory to attack
+        Territory territoryToAttack = null;
+
         // Pick what territory to attack with
         {
             Territory selectedTerritory = null;
-            // Select Territory With Mouse
-            while (selectedTerritory == null)
+            // PLAYER TURN
+            if (!gm.currentTurnsPlayer.isAI)
             {
-                // If LMB pressed
-                if (Input.GetMouseButtonDown(0))
+                // Select Territory With Mouse
+                while (selectedTerritory == null)
                 {
-                    RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                    if (hit.collider != null)
+                    // If LMB pressed
+                    if (Input.GetMouseButtonDown(0))
                     {
-                        Territory hitTerritory = hit.collider.GetComponent<Territory>();
-                        // Check if player has enough units to attack
-                        if (hitTerritory.owner == gm.currentTurnsPlayer && hitTerritory.unitCount > 1) selectedTerritory = hitTerritory;
+                        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+                        if (hit.collider != null)
+                        {
+                            Territory hitTerritory = hit.collider.GetComponent<Territory>();
+                            // Check if player has enough units to attack
+                            if (hitTerritory.owner == gm.currentTurnsPlayer && hitTerritory.unitCount > 1) selectedTerritory = hitTerritory;
+                        }
+                    }
+                    yield return null;
+                }
+            }
+            else
+            {
+                while(selectedTerritory == null)
+                {
+                    Territory t = gm.currentTurnsPlayer.ownedTerritories[Random.Range(0, gm.currentTurnsPlayer.ownedTerritories.Count)];
+                    if(t.unitCount > 1)
+                    {
+                        foreach (Territory at in t.adjacentTerritories)
+                        {
+                            if(at.owner != gm.currentTurnsPlayer)
+                            {
+                                territoryToAttack = at;
+                            }
+                        }
+                        if(territoryToAttack != null)
+                        {
+                            selectedTerritory = t;
+                        }
                     }
                 }
-                yield return null;
             }
 
             gm.currentlyAttackingTerritory = selectedTerritory;
@@ -163,26 +226,34 @@ public class Player
         {
             // Pick who to attack
             Territory selectedTerritory = null;
-            // Select Territory With Mouse
-            while (selectedTerritory == null)
+            // PLAYER TURN
+            if (!gm.currentTurnsPlayer.isAI)
             {
-                // If LMB pressed
-                if (Input.GetMouseButtonDown(0))
+                // Select Territory With Mouse
+                while (selectedTerritory == null)
                 {
-                    RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-                    if (hit.collider != null)
+                    // If LMB pressed
+                    if (Input.GetMouseButtonDown(0))
                     {
-                        Territory hitTerritory = hit.collider.GetComponent<Territory>();
-                        if (hitTerritory.owner != gm.currentTurnsPlayer)
+                        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+                        if (hit.collider != null)
                         {
-                            if (hitTerritory.adjacentTerritories.Contains(gm.currentlyAttackingTerritory))
+                            Territory hitTerritory = hit.collider.GetComponent<Territory>();
+                            if (hitTerritory.owner != gm.currentTurnsPlayer)
                             {
-                                selectedTerritory = hitTerritory;
+                                if (hitTerritory.adjacentTerritories.Contains(gm.currentlyAttackingTerritory))
+                                {
+                                    selectedTerritory = hitTerritory;
+                                }
                             }
                         }
                     }
+                    yield return null;
                 }
-                yield return null;
+            }
+            else
+            {
+                selectedTerritory = territoryToAttack;
             }
 
             gm.currentlyDefendingTerritory = selectedTerritory;
@@ -190,38 +261,79 @@ public class Player
         }
 
         // ATTACK TERRITORY
-
-        // PLAYER INPUT ON HOW MANY DICE TO ROLL
-        gm.attackerDiceRoll = DiceRollChoiceState.UNDECIDED;
-        gm.defenderDiceRoll = DiceRollChoiceState.UNDECIDED;
-
-        gm.uiManager.diceRollUI.diceRollType = DiceRollType.ATTACK;
-
-        gm.uiManager.diceRollUI.Show();
-
-        // Wait until attacker decides how many dice to attack with
-        while (gm.attackerDiceRoll == DiceRollChoiceState.UNDECIDED)
+        if (!gm.currentTurnsPlayer.isAI)
         {
-            yield return null;
+            // PLAYER INPUT ON HOW MANY DICE TO ROLL
+            gm.attackerDiceRoll = DiceRollChoiceState.UNDECIDED;
+            gm.defenderDiceRoll = DiceRollChoiceState.UNDECIDED;
+
+            gm.uiManager.diceRollUI.diceRollType = DiceRollType.ATTACK;
+
+            gm.uiManager.diceRollUI.Show();
+
+            // Wait until attacker decides how many dice to attack with
+            while (gm.attackerDiceRoll == DiceRollChoiceState.UNDECIDED)
+            {
+                yield return null;
+            }
+            gm.uiManager.diceRollUI.Hide();
+
+            gm.uiManager.diceRollUI.diceRollType = DiceRollType.DEFENSE;
+
+            gm.uiManager.diceRollUI.Show();
+
+            // Wait until defender decides how many dice to defend with
+            while (gm.defenderDiceRoll == DiceRollChoiceState.UNDECIDED)
+            {
+                yield return null;
+            }
+
+            gm.uiManager.diceRollUI.Hide();
         }
-        gm.uiManager.diceRollUI.Hide();
-
-        gm.uiManager.diceRollUI.diceRollType = DiceRollType.DEFENSE;
-
-        gm.uiManager.diceRollUI.Show();
-
-        // Wait until defender decides how many dice to defend with
-        while (gm.defenderDiceRoll == DiceRollChoiceState.UNDECIDED)
+        else
         {
-            yield return null;
-        }
+            if(gm.currentlyAttackingTerritory.unitCount == 2)
+            {
+                gm.attackerDiceRoll = DiceRollChoiceState.ONE;
+            }
+            else if(gm.currentlyAttackingTerritory.unitCount == 3)
+            {
+                gm.attackerDiceRoll = DiceRollChoiceState.TWO;
+            }
+            else
+            {
+                gm.attackerDiceRoll = DiceRollChoiceState.THREE;
+            }
 
-        gm.uiManager.diceRollUI.Hide();
+            if (gm.currentlyDefendingTerritory.owner.isAI)
+            {
+                if(gm.currentlyDefendingTerritory.unitCount == 1)
+                {
+                    gm.defenderDiceRoll = DiceRollChoiceState.ONE;
+                }
+                else
+                {
+                    gm.defenderDiceRoll = DiceRollChoiceState.TWO;
+                }
+            }
+            else
+            {
+                gm.uiManager.diceRollUI.Show();
+
+                // Wait until defender decides how many dice to defend with
+                while (gm.defenderDiceRoll == DiceRollChoiceState.UNDECIDED)
+                {
+                    yield return null;
+                }
+
+                gm.uiManager.diceRollUI.Hide();
+            }
+        }
 
         // ROLL DICE & CALCULATE RESULTS
         List<int> attackerRoll = new List<int>(); // New list of attackers dice
 
-       // Generate results for attacker dice roll
+        // Generate results for attacker dice roll
         for (int i = 0; i < (int)gm.attackerDiceRoll; i++)
         {
             attackerRoll.Add(Random.Range(1, 7));
@@ -235,16 +347,19 @@ public class Player
         }
 
         // SHOW RESULTS
-        gm.uiManager.diceRollResultsUI.Show(attackerRoll, defenderRoll);
-
-        while(gm.diceResultsShown == false)
+        if(!gm.currentlyAttackingTerritory.owner.isAI && !gm.currentlyDefendingTerritory.owner.isAI)
         {
-            yield return null;
+            gm.uiManager.diceRollResultsUI.Show(attackerRoll, defenderRoll);
+
+            while(gm.diceResultsShown == false)
+            {
+                yield return null;
+            }
+
+            gm.diceResultsShown = false;
+
+            gm.uiManager.diceRollResultsUI.Hide();
         }
-
-        gm.diceResultsShown = false;
-
-        gm.uiManager.diceRollResultsUI.Hide();
 
         /*
          * Runs once for every dice a defender rolled.
@@ -287,18 +402,26 @@ public class Player
 
             gm.currentlyDefendingTerritory.owner = gm.currentlyAttackingTerritory.owner;
 
-            gm.unitMovementUI.Show();
-
-            while (gm.unitAmountToMoveConfirmed == false)
+            if (!gm.currentTurnsPlayer.isAI)
             {
-                yield return null;
+                gm.unitMovementUI.Show();
+
+                while (gm.unitAmountToMoveConfirmed == false)
+                {
+                    yield return null;
+                }
+
+                gm.unitMovementUI.Hide();
+                gm.unitAmountToMoveConfirmed = false;
+
+                gm.currentlyDefendingTerritory.unitCount = gm.unitMovementUI.unitsToMove;
+                gm.currentlyAttackingTerritory.unitCount -= gm.unitMovementUI.unitsToMove;
             }
-
-            gm.unitMovementUI.Hide();
-            gm.unitAmountToMoveConfirmed = false;
-
-            gm.currentlyDefendingTerritory.unitCount = gm.unitMovementUI.unitsToMove;
-            gm.currentlyAttackingTerritory.unitCount -= gm.unitMovementUI.unitsToMove;
+            else
+            {
+                gm.currentlyDefendingTerritory.unitCount = gm.currentlyAttackingTerritory.unitCount - 1;
+                gm.currentlyAttackingTerritory.unitCount = 1;
+            }
         }
 
         gm.attackerDiceRoll = DiceRollChoiceState.UNDECIDED;

@@ -2863,6 +2863,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b84632fa24a31141878522ae715f265, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  map: {fileID: 0}
   uiManager: {fileID: 0}
   unitMovementUI: {fileID: 0}
   playerDataManager: {fileID: 0}

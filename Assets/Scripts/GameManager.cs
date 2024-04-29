@@ -47,7 +47,12 @@ public class GameManager : MonoBehaviour
                 break;
 
             case State.BEFORE_PLAYER_TURN:
+<<<<<<< Updated upstream
                 BeforePlayerTurn();
+=======
+                StopCoroutine(BeforePlayerTurn());
+                StartCoroutine(BeforePlayerTurn());
+>>>>>>> Stashed changes
                 break;
 
             case State.PLAYER_TURN:
@@ -332,6 +337,14 @@ public class GameManager : MonoBehaviour
 
         NextPlayer();
         ChangeState(State.BEFORE_PLAYER_TURN);
+    }
+    IEnumerator BeforePlayerTurn()
+    {
+        StartCoroutine(currentTurnsPlayer.BeforePlayerTurn(this, 3));
+
+        while (!playerTurnComplete) yield return null;
+        playerTurnComplete = false;
+        ChangeState(State.PLAYER_TURN);
     }
 
     void PlayerWon()

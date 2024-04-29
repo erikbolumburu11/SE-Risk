@@ -44,7 +44,7 @@ public enum DiceRollType
  */
 public class GameManager : MonoBehaviour
 {
-    WorldMap map;
+    public WorldMap map;
 
     public UIManager uiManager;
     public UnitMovementUI unitMovementUI;

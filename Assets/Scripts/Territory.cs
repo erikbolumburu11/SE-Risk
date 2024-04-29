@@ -25,6 +25,6 @@ public class Territory : MonoBehaviour
     void Update()
     {
         unitCountText.text = unitCount.ToString();
-        if(owner != null) image.color = owner.color;
+        if(owner != null) unitCountText.color = owner.color;
     }
 }

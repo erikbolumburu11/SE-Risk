@@ -100,7 +100,8 @@ public class GameManager : MonoBehaviour
                 break;
 
             case State.BEFORE_PLAYER_TURN:
-                currentTurnsPlayer.BeforePlayerTurn(this);
+                StopCoroutine(BeforePlayerTurn());
+                StartCoroutine(BeforePlayerTurn());
                 break;
 
             case State.PLAYER_TURN:
@@ -158,6 +159,14 @@ public class GameManager : MonoBehaviour
         ChangeState(State.BEFORE_PLAYER_TURN);
     }
 
+    IEnumerator BeforePlayerTurn()
+    {
+        StartCoroutine(currentTurnsPlayer.BeforePlayerTurn(this, 3));
+
+        while (!playerTurnComplete) yield return null;
+        playerTurnComplete = false;
+        ChangeState(State.PLAYER_TURN);
+    }
     /*
      * Handles the player turn logic
      */

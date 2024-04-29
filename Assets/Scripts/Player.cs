@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using UnityEngine;
 
 /*
@@ -32,7 +33,7 @@ public class Player
 
         // Choose Territories
         // TODO: Change to iterate 42 times when map is expanded to full size
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 7; i++)
         {
             Territory selectedTerritory = null;
             // Select Territory With Mouse
@@ -94,8 +95,30 @@ public class Player
      * Handles logic for things that happen before the players turn like
      * trading in cards
      */
-    public void BeforePlayerTurn(GameManager gm)
+    public IEnumerator BeforePlayerTurn(GameManager gm, int unitsToPlace)
     {
+        while(unitsToPlace > 0){
+            // Wait for input, if player clicks a territory it owns add 1 unit
+            Territory selectedTerritory = null;
+            // Select Territory With Mouse
+            while (selectedTerritory == null)
+            {
+                // If LMB pressed
+                if (Input.GetMouseButtonDown(0))
+                {
+                    RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+                    if (hit.collider != null)
+                    {
+                        selectedTerritory = hit.collider.GetComponent<Territory>();
+                        if (selectedTerritory.owner == gm.currentTurnsPlayer){ 
+                            selectedTerritory.unitCount++;
+                            unitsToPlace--;
+                        };
+                    }
+                }
+                yield return null;
+            }
+        }
         gm.ChangeState(State.PLAYER_TURN);
     }
 
@@ -150,7 +173,13 @@ public class Player
                     if (hit.collider != null)
                     {
                         Territory hitTerritory = hit.collider.GetComponent<Territory>();
-                        if (hitTerritory.owner != gm.currentTurnsPlayer) selectedTerritory = hitTerritory;
+                        if (hitTerritory.owner != gm.currentTurnsPlayer)
+                        {
+                            if (hitTerritory.adjacentTerritories.Contains(gm.currentlyAttackingTerritory))
+                            {
+                                selectedTerritory = hitTerritory;
+                            }
+                        }
                     }
                 }
                 yield return null;

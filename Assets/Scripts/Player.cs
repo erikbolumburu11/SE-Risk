@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using UnityEngine;
 
 /*
@@ -94,8 +95,32 @@ public class Player
      * Handles logic for things that happen before the players turn like
      * trading in cards
      */
-    public void BeforePlayerTurn(GameManager gm)
+    public IEnumerator BeforePlayerTurn(GameManager gm, int unitsToPlace)
     {
+        for(int i = 0; i < unitsToPlace; i++)
+        {
+            // Wait for input, if player clicks a territory it owns add 1 unit
+            Territory selectedTerritory = null;
+            // Select Territory With Mouse
+            while (selectedTerritory == null)
+            {
+                // If LMB pressed
+                if (Input.GetMouseButtonDown(0))
+                {
+                    RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+                    if (hit.collider != null)
+                    {
+                        selectedTerritory = hit.collider.GetComponent<Territory>();
+                        if (selectedTerritory.owner == gm.currentTurnsPlayer) selectedTerritory.unitCount++;
+                    }
+                }
+                yield return null;
+            }
+
+            selectedTerritory.unitCount++;
+
+            gm.NextPlayer();
+        }
         gm.ChangeState(State.PLAYER_TURN);
     }
 

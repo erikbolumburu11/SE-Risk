@@ -199,4 +199,21 @@ public class GameManager : MonoBehaviour
         }
         currentTurnsPlayer = players[currentTurnsPlayerIndex];
     }
+
+    /*
+    * calculate the number of troops a player should receive at the beginning of their turn
+    */
+    public int CalculateTroopsToReceive()
+    {
+        int troops = 0;
+        troops += Mathf.Max(3, currentTurnsPlayer.ownedTerritories.Count / 3);
+        foreach (Continent continent in map.continents)
+        {
+            if (continent.territories.TrueForAll(t => t.owner == currentTurnsPlayer))
+            {
+                troops += continent.bonusUnits;
+            }
+        }
+        return troops;
+    }
 }

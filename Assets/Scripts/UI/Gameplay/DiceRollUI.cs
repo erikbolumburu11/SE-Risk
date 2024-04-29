@@ -77,7 +77,7 @@ public class DiceRollUI : MonoBehaviour
     }
 
     /*
-     * Button functionality to roll two dice
+     * Button functionality to roll Three dice
      */
     public void RollThreeButton()
     {

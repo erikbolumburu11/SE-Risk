@@ -160,14 +160,17 @@ public class Player
 
         }
 
-        // Attack territory
-        // DICE ROLL
+        // ATTACK TERRITORY
+
+        // PLAYER INPUT ON HOW MANY DICE TO ROLL
         gm.attackerDiceRoll = DiceRollChoiceState.UNDECIDED;
         gm.defenderDiceRoll = DiceRollChoiceState.UNDECIDED;
 
         gm.uiManager.diceRollUI.diceRollType = DiceRollType.ATTACK;
+
         gm.uiManager.diceRollUI.Show();
 
+        // Wait until attacker decides how many dice to attack with
         while (gm.attackerDiceRoll == DiceRollChoiceState.UNDECIDED)
         {
             yield return null;
@@ -175,8 +178,10 @@ public class Player
         gm.uiManager.diceRollUI.Hide();
 
         gm.uiManager.diceRollUI.diceRollType = DiceRollType.DEFENSE;
+
         gm.uiManager.diceRollUI.Show();
 
+        // Wait until defender decides how many dice to defend with
         while (gm.defenderDiceRoll == DiceRollChoiceState.UNDECIDED)
         {
             yield return null;
@@ -184,19 +189,23 @@ public class Player
 
         gm.uiManager.diceRollUI.Hide();
 
-        // RESULTS
-        List<int> attackerRoll = new List<int>();
+        // ROLL DICE & CALCULATE RESULTS
+        List<int> attackerRoll = new List<int>(); // New list of attackers dice
+
+       // Generate results for attacker dice roll
         for (int i = 0; i < (int)gm.attackerDiceRoll; i++)
         {
             attackerRoll.Add(Random.Range(1, 7));
         }
 
-        List<int> defenderRoll = new List<int>();
+        List<int> defenderRoll = new List<int>(); // New list of attackers dice
+       // Generate results for defender dice roll
         for (int i = 0; i < (int)gm.defenderDiceRoll; i++)
         {
             defenderRoll.Add(Random.Range(1, 7));
         }
 
+        // SHOW RESULTS
         gm.uiManager.diceRollResultsUI.Show(attackerRoll, defenderRoll);
 
         while(gm.diceResultsShown == false)
@@ -208,6 +217,17 @@ public class Player
 
         gm.uiManager.diceRollResultsUI.Hide();
 
+        /*
+         * Runs once for every dice a defender rolled.
+         * 
+         * Compare the highest roll from either side.
+         * 
+         * If the attackers highest roll is higher than
+         * the defenders highest roll, remove one unit from
+         * the currently defending territory.
+         * In the other case, remove one unit from the currently
+         * attacking territory.
+         */
         for (int i = 0; i < (int)gm.defenderDiceRoll; i++)
         {
             if (attackerRoll.Count == 0 || defenderRoll.Count == 0) break;
@@ -229,7 +249,6 @@ public class Player
                 defenderRoll = Utils.RemoveANumberFromList(defenderRoll, defenderMax);
             }
         }
-
 
         // Claim territory 
         if (gm.currentlyDefendingTerritory.unitCount <= 0)

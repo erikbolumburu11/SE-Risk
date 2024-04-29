@@ -97,8 +97,7 @@ public class Player
      */
     public IEnumerator BeforePlayerTurn(GameManager gm, int unitsToPlace)
     {
-        for(int i = 0; i < unitsToPlace; i++)
-        {
+        while(unitsToPlace > 0){
             // Wait for input, if player clicks a territory it owns add 1 unit
             Territory selectedTerritory = null;
             // Select Territory With Mouse
@@ -111,15 +110,14 @@ public class Player
                     if (hit.collider != null)
                     {
                         selectedTerritory = hit.collider.GetComponent<Territory>();
-                        if (selectedTerritory.owner == gm.currentTurnsPlayer) selectedTerritory.unitCount++;
+                        if (selectedTerritory.owner == gm.currentTurnsPlayer){ 
+                            selectedTerritory.unitCount++;
+                            unitsToPlace--;
+                        };
                     }
                 }
                 yield return null;
             }
-
-            selectedTerritory.unitCount++;
-
-            gm.NextPlayer();
         }
         gm.ChangeState(State.PLAYER_TURN);
     }

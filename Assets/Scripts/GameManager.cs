@@ -248,10 +248,18 @@ public class GameManager : MonoBehaviour
             foreach (string territoryName in continent.territoriesNames)
             {
                 Territory territory = map.territories.Find(t => t.name == territoryName);
-                if (territory.owner != currentTurnsPlayer)
+
+                if (territory == null)
                 {
                     ownsContinent = false;
                     break;
+                }
+                if(territory.owner != null)
+                {
+                    if (territory.owner != currentTurnsPlayer)
+                    {
+                        ownsContinent = false;
+                    }
                 }
             }
             if (ownsContinent)
@@ -261,6 +269,4 @@ public class GameManager : MonoBehaviour
         }
         return troops;
     }
-
-    
 }

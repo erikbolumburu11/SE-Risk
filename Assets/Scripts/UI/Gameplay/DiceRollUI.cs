@@ -16,11 +16,11 @@ public class DiceRollUI : MonoBehaviour
     {
         if(diceRollType == DiceRollType.ATTACK)
         {
-            titleText.text = gameManager.currentlyAttackingTerritory.owner.name + " Attack With X Dice";
+            titleText.text = gameManager.currentlyAttackingTerritory.owner.name + " Attack " + gameManager.currentlyAttackingTerritory.gameObject.name +  "With X Dice";
         }
         if(diceRollType == DiceRollType.DEFENSE)
         {
-            titleText.text = gameManager.currentlyDefendingTerritory.owner.name + " Defend With X Dice";
+            titleText.text = gameManager.currentlyDefendingTerritory.owner.name + " Defend " + gameManager.currentlyDefendingTerritory.gameObject.name + " With X Dice";
         }
     }
 

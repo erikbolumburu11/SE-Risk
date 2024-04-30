@@ -9,4 +9,5 @@ using UnityEngine;
 public class WorldMap : MonoBehaviour
 {
     public List<Territory> territories;
+    
 }

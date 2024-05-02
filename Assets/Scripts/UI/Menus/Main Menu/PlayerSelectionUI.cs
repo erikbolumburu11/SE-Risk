@@ -33,7 +33,7 @@ public class PlayerSelectionUI : MonoBehaviour
     public void StartGame()
     {
         PlayerPanel[] playerPanels = GetComponentsInChildren<PlayerPanel>();
-        if (playerPanels.Length < 3) return;
+        if (playerPanels.Length < 3 || playerPanels.Length > 6) return;
         foreach (PlayerPanel pp in playerPanels)
         {
             if (pp.name.Length == 0) return;

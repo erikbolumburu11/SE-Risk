@@ -373,7 +373,7 @@ public class Player
         }
 
         // SHOW RESULTS
-        if(!gm.currentlyAttackingTerritory.owner.isAI && !gm.currentlyDefendingTerritory.owner.isAI)
+        if(!gm.currentTurnsPlayer.isAI)
         {
             gm.uiManager.diceRollResultsUI.Show(attackerRoll, defenderRoll);
 

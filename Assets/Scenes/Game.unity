@@ -3553,7 +3553,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.69411767}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6181,6 +6181,41 @@ MonoBehaviour:
   - {fileID: 972774048}
   - {fileID: 1843526131}
   - {fileID: 1580761453}
+  - {fileID: 643107128}
+  - {fileID: 781212084}
+  - {fileID: 1981608060}
+  - {fileID: 1371791879}
+  - {fileID: 2017711885}
+  - {fileID: 1735143459}
+  - {fileID: 1113849434}
+  - {fileID: 1643323960}
+  - {fileID: 1536035290}
+  - {fileID: 1061929537}
+  - {fileID: 1578234162}
+  - {fileID: 1573911879}
+  - {fileID: 2117703603}
+  - {fileID: 1157145521}
+  - {fileID: 1259601769}
+  - {fileID: 1721412543}
+  - {fileID: 222930131}
+  - {fileID: 740821858}
+  - {fileID: 1564968916}
+  - {fileID: 1140185470}
+  - {fileID: 1009192028}
+  - {fileID: 237004700}
+  - {fileID: 1560389222}
+  - {fileID: 399631675}
+  - {fileID: 720875431}
+  - {fileID: 1436376463}
+  - {fileID: 561113175}
+  - {fileID: 1370951353}
+  - {fileID: 1155266076}
+  - {fileID: 89580719}
+  - {fileID: 1897580241}
+  - {fileID: 825718213}
+  - {fileID: 348642836}
+  - {fileID: 368919165}
+  - {fileID: 1368861025}
 --- !u!114 &1003518002
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6631,7 +6666,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.69411767}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -7833,7 +7868,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.5019608}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -12260,7 +12295,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.69411767}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

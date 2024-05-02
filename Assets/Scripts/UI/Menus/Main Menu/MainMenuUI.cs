@@ -11,7 +11,7 @@ public class MainMenuUI : MonoBehaviour
     /*
      * Loads the player selection scene
      */
-    public void Start()
+    public void StartGame()
     {
         SceneManager.LoadScene("PlayerSelection");
     }

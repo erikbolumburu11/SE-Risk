@@ -192,7 +192,15 @@ public class Player
                         {
                             Territory hitTerritory = hit.collider.GetComponent<Territory>();
                             // Check if player has enough units to attack
-                            if (hitTerritory.owner == gm.currentTurnsPlayer && hitTerritory.unitCount > 1) selectedTerritory = hitTerritory;
+                            if (hitTerritory.owner == gm.currentTurnsPlayer && hitTerritory.unitCount > 1)
+                            {
+                                bool adjacentEnemies = false;
+                                foreach (Territory territory in hitTerritory.adjacentTerritories)
+                                {
+                                    if (territory.owner != gm.currentTurnsPlayer) adjacentEnemies = true;
+                                }
+                                if (adjacentEnemies) selectedTerritory = hitTerritory;
+                            }
                         }
                     }
                     yield return null;
@@ -279,17 +287,33 @@ public class Player
             }
             gm.uiManager.diceRollUI.Hide();
 
-            gm.uiManager.diceRollUI.diceRollType = DiceRollType.DEFENSE;
-
-            gm.uiManager.diceRollUI.Show();
-
-            // Wait until defender decides how many dice to defend with
-            while (gm.defenderDiceRoll == DiceRollChoiceState.UNDECIDED)
+            if (gm.currentlyDefendingTerritory.owner.isAI)
             {
-                yield return null;
+                gm.uiManager.diceRollUI.diceRollType = DiceRollType.DEFENSE;
+                if(gm.currentlyDefendingTerritory.unitCount == 1)
+                {
+                    gm.defenderDiceRoll = DiceRollChoiceState.ONE;
+                }
+                else
+                {
+                    gm.defenderDiceRoll = DiceRollChoiceState.TWO;
+                }
             }
+            else
+            {
 
-            gm.uiManager.diceRollUI.Hide();
+                gm.uiManager.diceRollUI.diceRollType = DiceRollType.DEFENSE;
+                
+                gm.uiManager.diceRollUI.Show();
+
+                // Wait until defender decides how many dice to defend with
+                while (gm.defenderDiceRoll == DiceRollChoiceState.UNDECIDED)
+                {
+                    yield return null;
+                }
+
+                gm.uiManager.diceRollUI.Hide();
+            }
         }
         else
         {

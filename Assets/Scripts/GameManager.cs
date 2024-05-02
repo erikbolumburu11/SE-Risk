@@ -132,8 +132,8 @@ public class GameManager : MonoBehaviour
         switch (players.Count)
         {
             case 3:
-                // unitsPerPlayer = 35; // Commented for testing
-                unitsPerPlayer = 5;
+                unitsPerPlayer = 35; // Commented for testing
+                //unitsPerPlayer = 5;
                 break;
 
             case 4:

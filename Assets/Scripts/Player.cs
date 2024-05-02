@@ -33,8 +33,7 @@ public class Player
 
         // Choose Territories
         // TODO: Change to iterate 42 times when map is expanded to full size
-        int territoryCount = 7;
-        for (int i = 0; i < territoryCount; i++)
+        for (int i = 0; i < gm.map.territories.Count; i++)
         {
             Territory selectedTerritory = null;
 
@@ -62,7 +61,7 @@ public class Player
             {
                 while(selectedTerritory == null)
                 {
-                    Territory t = gm.map.territories[Random.Range(0, territoryCount)];
+                    Territory t = gm.map.territories[Random.Range(0, gm.map.territories.Count)];
                     if(t.owner == null)
                     {
                         selectedTerritory = t;
@@ -254,18 +253,20 @@ public class Player
             else
             {
                 selectedTerritory = territoryToAttack;
+                gm.currentlyDefendingTerritory = selectedTerritory;
             }
 
             gm.currentlyDefendingTerritory = selectedTerritory;
 
         }
 
+        gm.attackerDiceRoll = DiceRollChoiceState.UNDECIDED;
+        gm.defenderDiceRoll = DiceRollChoiceState.UNDECIDED;
+
         // ATTACK TERRITORY
         if (!gm.currentTurnsPlayer.isAI)
         {
             // PLAYER INPUT ON HOW MANY DICE TO ROLL
-            gm.attackerDiceRoll = DiceRollChoiceState.UNDECIDED;
-            gm.defenderDiceRoll = DiceRollChoiceState.UNDECIDED;
 
             gm.uiManager.diceRollUI.diceRollType = DiceRollType.ATTACK;
 
@@ -305,6 +306,7 @@ public class Player
                 gm.attackerDiceRoll = DiceRollChoiceState.THREE;
             }
 
+            gm.currentlyDefendingTerritory = territoryToAttack;
             if (gm.currentlyDefendingTerritory.owner.isAI)
             {
                 if(gm.currentlyDefendingTerritory.unitCount == 1)
@@ -428,6 +430,8 @@ public class Player
         gm.defenderDiceRoll = DiceRollChoiceState.UNDECIDED;
 
         gm.playerTurnComplete = true;
+
+        yield return new WaitForSeconds(0.5f);
 
         yield return null;
     }
